@@ -1,3 +1,13 @@
+import os
+import pandas as pd
+import numpy as np
+import logging
+from typing import List, Optional, Tuple, Dict
+
+# Get logger
+logger = logging.getLogger('backtest_lib')
+
+
 class DataLoader:
     """Load and preprocess cryptocurrency data from CSV files"""
     

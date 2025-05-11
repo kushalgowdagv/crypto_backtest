@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Optional
 import logging
 
 # Get logger
@@ -99,7 +99,7 @@ class DataProcessor:
                 
             elif feature == 'rsi' or feature.startswith('rsi_'):
                 if feature == 'rsi':
-                    period = an14
+                    period = 14
                 else:
                     period = int(feature.split('_')[1])
                 df_features['rsi'] = Indicators.rsi(df_features['close'], period)
