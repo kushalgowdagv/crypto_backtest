@@ -1,3 +1,13 @@
+import pandas as pd
+import numpy as np
+import logging
+from backtest_lib.strategies.strategy import Strategy
+from backtest_lib.indicators.indicators import Indicators
+
+# Get logger
+logger = logging.getLogger('backtest_lib')
+
+
 class VolatilityBreakoutStrategy(Strategy):
     """
     Volatility Breakout Strategy Implementation

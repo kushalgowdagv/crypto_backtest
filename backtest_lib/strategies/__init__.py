@@ -1,0 +1,12 @@
+"""
+Trading strategy modules
+"""
+
+from backtest_lib.strategies.strategy import Strategy
+from backtest_lib.strategies.trend_following import TrendFollowingStrategy
+from backtest_lib.strategies.mean_reversion import MeanReversionStrategy
+from backtest_lib.strategies.volatility_breakout import VolatilityBreakoutStrategy
+from backtest_lib.strategies.volume_price_divergence import VolumePriceDivergenceStrategy
+from backtest_lib.strategies.multi_timeframe import MultiTimeframeStrategy
+from backtest_lib.strategies.pair_trading import PairTradingStrategy
+from backtest_lib.strategies.machine_learning import MachineLearningStrategy

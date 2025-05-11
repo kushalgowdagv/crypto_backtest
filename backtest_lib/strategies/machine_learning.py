@@ -1,3 +1,40 @@
+import os
+import pickle
+import numpy as np
+import pandas as pd
+import logging
+from typing import Any, List, Tuple, Dict
+from backtest_lib.strategies.strategy import Strategy
+from backtest_lib.indicators.indicators import Indicators
+
+# Get logger
+logger = logging.getLogger('backtest_lib')
+
+try:
+    from sklearn.preprocessing import StandardScaler
+    ML_AVAILABLE = True
+except ImportError:
+    logger.warning("scikit-learn not installed. Machine learning functionality will be limited.")
+    ML_AVAILABLE = False
+
+try:
+    import tensorflow as tf
+    from tensorflow.keras.models import Sequential, load_model
+    from tensorflow.keras.layers import Dense, LSTM, GRU, Dropout
+    from tensorflow.keras.callbacks import EarlyStopping
+    TF_AVAILABLE = True
+except ImportError:
+    logger.warning("TensorFlow not installed. LSTM/GRU models will not be available.")
+    TF_AVAILABLE = False
+
+try:
+    import xgboost as xgb
+    XGBOOST_AVAILABLE = True
+except ImportError:
+    logger.warning("XGBoost not installed. XGBoost models will not be available.")
+    XGBOOST_AVAILABLE = False
+
+
 class MachineLearningStrategy(Strategy):
     """
     Machine Learning Strategy Implementation
