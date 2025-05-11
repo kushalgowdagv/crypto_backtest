@@ -405,3 +405,4 @@ class Analysis:
         plt.ylabel('Price')
         plt.grid(True)
         plt.show()
+

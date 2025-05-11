@@ -238,7 +238,8 @@ def main():
         
         # Calculate position: 1 for long, -1 for short, 0 for flat
         # Use ffill method instead of the problematic method=None
-        df['position'] = df['signal'].replace(to_replace=0, method='ffill')
+        # df['position'] = df['signal'].replace(to_replace=0, method='ffill')
+        df['position'] = df['signal'].replace({0: None}).fillna(method='ffill')
         
         # Remove NaN values
         df.dropna(inplace=True)
@@ -259,7 +260,10 @@ def main():
     # Analyze results
     logger.info("Analyzing results...")
     analysis = Analysis(backtest=backtest)
-    report = analysis.generate_performance_report(output_dir)
+    # report = analysis.generate_performance_report(output_dir)
+
+    analysis.export_results_to_csv(results, results_dir)
+    analysis.analyze_results(results_dir)
     
     # Display key metrics
     metrics = backtest.get_performance_metrics()
