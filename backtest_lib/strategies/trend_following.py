@@ -1,4 +1,3 @@
-
 import pandas as pd
 import numpy as np
 import logging
@@ -78,7 +77,18 @@ class TrendFollowingStrategy(Strategy):
         df.loc[crossover_down, 'signal'] = -1
         
         # Calculate position: 1 for long, -1 for short, 0 for flat
-        df['position'] = df['signal'].replace(to_replace=0, method='ffill')
+        # Fix for the deprecated method keyword in pandas replace
+        # Using a different approach to forward fill zeros
+        df['position'] = df['signal'].copy()
+        df['position'] = df['position'].replace(to_replace=0, method=None)  # First remove the method
+        
+        # Now use a custom approach to forward fill
+        last_non_zero = 0
+        for i in range(len(df)):
+            if df['position'].iloc[i] != 0:
+                last_non_zero = df['position'].iloc[i]
+            else:
+                df.iloc[i, df.columns.get_loc('position')] = last_non_zero
         
         # Remove NaN values
         df.dropna(inplace=True)

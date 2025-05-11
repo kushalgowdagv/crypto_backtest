@@ -12,6 +12,12 @@ import logging
 logger = logging.getLogger('backtest_lib')
 
 
+# Custom JSON encoder to handle pandas Timestamp objects
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, pd.Timestamp):
+            return obj.strftime('%Y-%m-%d %H:%M:%S')
+        return super().default(obj)
 
 
 class Analysis:
@@ -19,7 +25,7 @@ class Analysis:
     Performance analysis and reporting tools
     """
     
-    def __init__(self, backtest: Backtest = None, results: pd.DataFrame = None):
+    def __init__(self, backtest=None, results: pd.DataFrame = None):
         """
         Initialize the analysis module
         
@@ -73,12 +79,22 @@ class Analysis:
             metrics = self._calculate_metrics()
             trades = self._extract_trades()
         
+        # Convert Timestamp objects to strings in trades dataframe
+        trades_dict = []
+        for _, trade in trades.iterrows():
+            trade_dict = trade.to_dict()
+            # Convert all timestamp objects to strings
+            for key, value in trade_dict.items():
+                if isinstance(value, pd.Timestamp):
+                    trade_dict[key] = value.strftime('%Y-%m-%d %H:%M:%S')
+            trades_dict.append(trade_dict)
+        
         # Create report content
         report = {
             'strategy_name': self.strategy_name,
             'timestamp': timestamp,
             'metrics': metrics,
-            'trades': trades.to_dict(orient='records') if len(trades) > 0 else [],
+            'trades': trades_dict,
             'figures': []
         }
         
@@ -86,10 +102,10 @@ class Analysis:
         if save_fig:
             report['figures'] = self._generate_figures(directory, timestamp)
         
-        # Save report to JSON
+        # Save report to JSON using custom encoder
         report_file = os.path.join(directory, f"{self.strategy_name}_{timestamp}_report.json")
         with open(report_file, 'w') as f:
-            json.dump(report, f, indent=4)
+            json.dump(report, f, indent=4, cls=CustomJSONEncoder)
         
         logger.info(f"Performance report for strategy '{self.strategy_name}' saved to {report_file}")
         

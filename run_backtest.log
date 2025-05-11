@@ -1,0 +1,35 @@
+2025-05-11 16:08:55,578 - run_backtest - INFO - Creating mock data...
+2025-05-11 16:08:55,592 - run_backtest - INFO - Creating strategy...
+2025-05-11 16:08:55,593 - run_backtest - INFO - Setting up backtest...
+2025-05-11 16:08:55,595 - run_backtest - INFO - Running backtest...
+2025-05-11 16:09:09,305 - run_backtest - INFO - Saving backtest results...
+2025-05-11 16:09:11,302 - run_backtest - INFO - Analyzing results...
+2025-05-11 16:17:55,089 - run_backtest - INFO - Creating mock data...
+2025-05-11 16:17:55,093 - run_backtest - INFO - Creating strategy...
+2025-05-11 16:17:55,094 - run_backtest - INFO - Setting up backtest...
+2025-05-11 16:17:55,096 - run_backtest - INFO - Running backtest...
+2025-05-11 16:17:55,103 - run_backtest - ERROR - Error running backtest: Invalid fill method. Expecting pad (ffill) or backfill (bfill). Got None
+Traceback (most recent call last):
+  File "c:\Users\sagar\OneDrive\Documents\GitHub\crypto_backtest\run_backtest.py", line 127, in <module>
+    main()
+  File "c:\Users\sagar\OneDrive\Documents\GitHub\crypto_backtest\run_backtest.py", line 73, in main
+    results = backtest.run()
+              ^^^^^^^^^^^^^^
+  File "c:\Users\sagar\OneDrive\Documents\GitHub\crypto_backtest\backtest_lib\engine\backtest.py", line 120, in run
+    signals = self.strategy.generate_signals(self.data)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\sagar\OneDrive\Documents\GitHub\crypto_backtest\backtest_lib\strategies\trend_following.py", line 83, in generate_signals
+    df['position'] = df['position'].replace(to_replace=0, method=None)  # First remove the method
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sagar\anaconda3\Lib\site-packages\pandas\core\generic.py", line 8004, in replace
+    return self._replace_single(to_replace, method, inplace, limit)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sagar\anaconda3\Lib\site-packages\pandas\core\series.py", line 5425, in _replace_single
+    fill_f = missing.get_fill_func(method)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sagar\anaconda3\Lib\site-packages\pandas\core\missing.py", line 1067, in get_fill_func
+    method = clean_fill_method(method)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sagar\anaconda3\Lib\site-packages\pandas\core\missing.py", line 177, in clean_fill_method
+    raise ValueError(f"Invalid fill method. Expecting {expecting}. Got {method}")
+ValueError: Invalid fill method. Expecting pad (ffill) or backfill (bfill). Got None
