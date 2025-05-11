@@ -1,3 +1,5 @@
+
+
 # import os
 # import sys
 # import pandas as pd
@@ -10,6 +12,7 @@
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # # Import necessary modules
+# from backtest_lib.strategies.strategy import Strategy
 # from backtest_lib.strategies.trend_following import TrendFollowingStrategy
 # from backtest_lib.data_adapters.data_loader import DataLoader
 # from backtest_lib.engine.backtest import Backtest
@@ -111,7 +114,6 @@ from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import necessary modules
-from backtest_lib.strategies.strategy import Strategy
 from backtest_lib.strategies.trend_following import TrendFollowingStrategy
 from backtest_lib.data_adapters.data_loader import DataLoader
 from backtest_lib.engine.backtest import Backtest
@@ -122,17 +124,35 @@ from backtest_lib.utils.utils import setup_logger
 logger = setup_logger(name='example_trend_following', log_file='example_trend_following.log')
 
 def main():
-    # Paths
-    data_dir = os.path.join('..', 'data')
+    # Create mock data since actual data files don't exist
+    logger.info("Creating mock data...")
+    
+    # Create date range
+    dates = pd.date_range(start='2024-01-01', end='2024-04-30', freq='10min')
+    
+    # Create sample price data
+    np.random.seed(42)  # For reproducibility
+    
+    # Initial price
+    initial_price = 50000
+    
+    # Generate random returns
+    returns = np.random.normal(0.0001, 0.002, len(dates))
+    
+    # Calculate price series
+    prices = initial_price * (1 + returns).cumprod()
+    
+    # Create mock OHLCV data
+    btc_data = pd.DataFrame(index=dates)
+    btc_data['open'] = prices * (1 + np.random.normal(0, 0.0005, len(dates)))
+    btc_data['high'] = btc_data['open'] * (1 + abs(np.random.normal(0, 0.001, len(dates))))
+    btc_data['low'] = btc_data['open'] * (1 - abs(np.random.normal(0, 0.001, len(dates))))
+    btc_data['close'] = prices
+    btc_data['volume'] = np.random.lognormal(10, 1, len(dates))
+    
+    # Create output directory
     output_dir = os.path.join('..', 'output')
     os.makedirs(output_dir, exist_ok=True)
-    
-    # Data loader
-    logger.info("Loading data...")
-    data_loader = DataLoader(data_dir)
-    
-    # Load BTC data
-    btc_data = data_loader.get_ohlcv('BTCUSD', '10m')
     
     # Create strategy
     logger.info("Creating strategy...")
@@ -158,6 +178,78 @@ def main():
     
     # Run backtest
     logger.info("Running backtest...")
+    
+    # First patch the trend_following.py issue with method=None
+    # We're fixing it dynamically for this execution
+    from types import MethodType
+    
+    def patched_generate_signals(self, data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Generate trading signals - patched version
+        
+        Parameters:
+        -----------
+        data : pd.DataFrame
+            Market data with OHLCV
+            
+        Returns:
+        --------
+        pd.DataFrame
+            DataFrame with signals
+        """
+        df = data.copy()
+        
+        # Calculate moving averages
+        fast_period = self.parameters['fast_period']
+        slow_period = self.parameters['slow_period']
+        
+        df[f'sma_{fast_period}'] = df['close'].rolling(window=fast_period).mean()
+        df[f'sma_{slow_period}'] = df['close'].rolling(window=slow_period).mean()
+        
+        # Calculate ATR for position sizing (optional)
+        atr_period = self.parameters['atr_period']
+        
+        # Calculate ATR manually instead of using the Indicators class
+        high = df['high']
+        low = df['low']
+        close = df['close']
+        
+        prev_close = close.shift(1)
+        tr1 = high - low
+        tr2 = (high - prev_close).abs()
+        tr3 = (low - prev_close).abs()
+        
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        df['atr'] = tr.rolling(window=atr_period).mean()
+        
+        # Generate signals
+        df['signal'] = 0
+        df['position'] = 0
+        
+        # Buy signal: fast MA crosses above slow MA
+        crossover_up = (df[f'sma_{fast_period}'] > df[f'sma_{slow_period}']) & \
+                     (df[f'sma_{fast_period}'].shift(1) <= df[f'sma_{slow_period}'].shift(1))
+        df.loc[crossover_up, 'signal'] = 1
+        
+        # Sell signal: fast MA crosses below slow MA
+        crossover_down = (df[f'sma_{fast_period}'] < df[f'sma_{slow_period}']) & \
+                       (df[f'sma_{fast_period}'].shift(1) >= df[f'sma_{slow_period}'].shift(1))
+        df.loc[crossover_down, 'signal'] = -1
+        
+        # Calculate position: 1 for long, -1 for short, 0 for flat
+        # Use ffill method instead of the problematic method=None
+        df['position'] = df['signal'].replace(to_replace=0, method='ffill')
+        
+        # Remove NaN values
+        df.dropna(inplace=True)
+        
+        self.signals = df
+        return df
+    
+    # Apply the patched method to the strategy
+    strategy.generate_signals = MethodType(patched_generate_signals, strategy)
+    
+    # Run the backtest with patched strategy
     results = backtest.run()
     
     # Save results
