@@ -442,9 +442,9 @@ def generate_sample_data(start_date='2024-01-01', end_date='2024-04-30', freq='1
 
 def main():
     # Create output directory
-    output_dir = os.path.join('..', 'output')
+    output_dir = os.path.join(os.getcwd(), 'output')
     os.makedirs(output_dir, exist_ok=True)
-    print(f"/n Output directory created at: {output_dir}")
+    print(f"\n Output directory created at: {output_dir}")
     # Generate sample data
     logger.info("Generating sample data...")
     btc_data = generate_sample_data()
