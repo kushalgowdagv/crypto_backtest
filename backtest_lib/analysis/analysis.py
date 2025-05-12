@@ -1527,96 +1527,96 @@ class Analysis:
         
         return pd.DataFrame(trades)
     
-    def _generate_figures(self, directory: str, timestamp: str) -> List[str]:
-        """
-        Generate performance figures
+    # def _generate_figures(self, directory: str, timestamp: str) -> List[str]:
+    #     """
+    #     Generate performance figures
         
-        Parameters:
-        -----------
-        directory : str
-            Directory to save figures
-        timestamp : str
-            Timestamp for file names
+    #     Parameters:
+    #     -----------
+    #     directory : str
+    #         Directory to save figures
+    #     timestamp : str
+    #         Timestamp for file names
             
-        Returns:
-        --------
-        List[str]
-            List of figure file paths
-        """
-        figure_files = []
+    #     Returns:
+    #     --------
+    #     List[str]
+    #         List of figure file paths
+    #     """
+    #     figure_files = []
         
-        # Set Seaborn style
-        sns.set_style('whitegrid')
-        plt.figure(figsize=(12, 8))
+    #     # Set Seaborn style
+    #     sns.set_style('whitegrid')
+    #     plt.figure(figsize=(12, 8))
         
-        # 1. Portfolio value
-        fig1 = plt.figure(figsize=(12, 6))
-        plt.plot(self.results.index, self.results['portfolio_value'])
-        plt.title(f"Portfolio Value - {self.strategy_name}")
-        plt.xlabel('Date')
-        plt.ylabel('Value')
-        plt.grid(True)
-        fig1_file = os.path.join(directory, f"{self.strategy_name}_{timestamp}_portfolio_value.png")
-        plt.savefig(fig1_file)
-        plt.close(fig1)
-        figure_files.append(fig1_file)
+    #     # 1. Portfolio value
+    #     fig1 = plt.figure(figsize=(12, 6))
+    #     plt.plot(self.results.index, self.results['portfolio_value'])
+    #     plt.title(f"Portfolio Value - {self.strategy_name}")
+    #     plt.xlabel('Date')
+    #     plt.ylabel('Value')
+    #     plt.grid(True)
+    #     fig1_file = os.path.join(directory, f"{self.strategy_name}_{timestamp}_portfolio_value.png")
+    #     plt.savefig(fig1_file)
+    #     plt.close(fig1)
+    #     figure_files.append(fig1_file)
         
-        # 2. Cumulative returns
-        fig2 = plt.figure(figsize=(12, 6))
-        plt.plot(self.results.index, self.results['cumulative_returns'])
-        plt.title(f"Cumulative Returns - {self.strategy_name}")
-        plt.xlabel('Date')
-        plt.ylabel('Returns')
-        plt.grid(True)
-        fig2_file = os.path.join(directory, f"{self.strategy_name}_{timestamp}_cumulative_returns.png")
-        plt.savefig(fig2_file)
-        plt.close(fig2)
-        figure_files.append(fig2_file)
+    #     # 2. Cumulative returns
+    #     fig2 = plt.figure(figsize=(12, 6))
+    #     plt.plot(self.results.index, self.results['cumulative_returns'])
+    #     plt.title(f"Cumulative Returns - {self.strategy_name}")
+    #     plt.xlabel('Date')
+    #     plt.ylabel('Returns')
+    #     plt.grid(True)
+    #     fig2_file = os.path.join(directory, f"{self.strategy_name}_{timestamp}_cumulative_returns.png")
+    #     plt.savefig(fig2_file)
+    #     plt.close(fig2)
+    #     figure_files.append(fig2_file)
         
-        # 3. Drawdowns
-        fig3 = plt.figure(figsize=(12, 6))
-        returns = self.results['returns'].dropna()
-        if len(returns) > 0:
-            cumulative_returns = (1 + returns).cumprod()
-            max_return = cumulative_returns.expanding().max()
-            drawdowns = (cumulative_returns / max_return) - 1
-            plt.plot(drawdowns.index, drawdowns)
-            plt.title(f"Drawdowns - {self.strategy_name}")
-            plt.xlabel('Date')
-            plt.ylabel('Drawdown')
-            plt.grid(True)
-            fig3_file = os.path.join(directory, f"{self.strategy_name}_{timestamp}_drawdowns.png")
-            plt.savefig(fig3_file)
-            plt.close(fig3)
-            figure_files.append(fig3_file)
+    #     # 3. Drawdowns
+    #     fig3 = plt.figure(figsize=(12, 6))
+    #     returns = self.results['returns'].dropna()
+    #     if len(returns) > 0:
+    #         cumulative_returns = (1 + returns).cumprod()
+    #         max_return = cumulative_returns.expanding().max()
+    #         drawdowns = (cumulative_returns / max_return) - 1
+    #         plt.plot(drawdowns.index, drawdowns)
+    #         plt.title(f"Drawdowns - {self.strategy_name}")
+    #         plt.xlabel('Date')
+    #         plt.ylabel('Drawdown')
+    #         plt.grid(True)
+    #         fig3_file = os.path.join(directory, f"{self.strategy_name}_{timestamp}_drawdowns.png")
+    #         plt.savefig(fig3_file)
+    #         plt.close(fig3)
+    #         figure_files.append(fig3_file)
         
-        # 4. Position over time
-        fig4 = plt.figure(figsize=(12, 6))
-        plt.plot(self.results.index, self.results['position'])
-        plt.title(f"Position - {self.strategy_name}")
-        plt.xlabel('Date')
-        plt.ylabel('Position')
-        plt.grid(True)
-        fig4_file = os.path.join(directory, f"{self.strategy_name}_{timestamp}_position.png")
-        plt.savefig(fig4_file)
-        plt.close(fig4)
-        figure_files.append(fig4_file)
+    #     # 4. Position over time
+    #     fig4 = plt.figure(figsize=(12, 6))
+    #     plt.plot(self.results.index, self.results['position'])
+    #     plt.title(f"Position - {self.strategy_name}")
+    #     plt.xlabel('Date')
+    #     plt.ylabel('Position')
+    #     plt.grid(True)
+    #     fig4_file = os.path.join(directory, f"{self.strategy_name}_{timestamp}_position.png")
+    #     plt.savefig(fig4_file)
+    #     plt.close(fig4)
+    #     figure_files.append(fig4_file)
         
-        # 5. Returns distribution
-        fig5 = plt.figure(figsize=(12, 6))
-        returns = self.results['returns'].dropna()
-        if len(returns) > 0:
-            sns.histplot(returns, kde=True)
-            plt.title(f"Returns Distribution - {self.strategy_name}")
-            plt.xlabel('Returns')
-            plt.ylabel('Frequency')
-            plt.grid(True)
-            fig5_file = os.path.join(directory, f"{self.strategy_name}_{timestamp}_returns_dist.png")
-            plt.savefig(fig5_file)
-            plt.close(fig5)
-            figure_files.append(fig5_file)
+    #     # 5. Returns distribution
+    #     fig5 = plt.figure(figsize=(12, 6))
+    #     returns = self.results['returns'].dropna()
+    #     if len(returns) > 0:
+    #         sns.histplot(returns, kde=True)
+    #         plt.title(f"Returns Distribution - {self.strategy_name}")
+    #         plt.xlabel('Returns')
+    #         plt.ylabel('Frequency')
+    #         plt.grid(True)
+    #         fig5_file = os.path.join(directory, f"{self.strategy_name}_{timestamp}_returns_dist.png")
+    #         plt.savefig(fig5_file)
+    #         plt.close(fig5)
+    #         figure_files.append(fig5_file)
         
-        return figure_files
+    #     return figure_files
     
     def plot_equity_curve(self) -> None:
         """
