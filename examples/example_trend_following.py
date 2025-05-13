@@ -835,57 +835,57 @@ def main():
     # Plot results
     logger.info("Plotting results...")
     
-    # Create a figure with 4 subplots
-    fig = plt.figure(figsize=(15, 12))
+    # # Create a figure with 4 subplots
+    # fig = plt.figure(figsize=(15, 12))
     
-    # Plot 1: Price and moving averages
-    ax1 = plt.subplot(2, 2, 1)
-    ax1.plot(results.index, results['close'], label='Price', alpha=0.5)
-    ax1.plot(results.index, results[f'sma_{strategy.parameters["fast_period"]}'], label=f'SMA {strategy.parameters["fast_period"]}')
-    ax1.plot(results.index, results[f'sma_{strategy.parameters["slow_period"]}'], label=f'SMA {strategy.parameters["slow_period"]}')
+    # # Plot 1: Price and moving averages
+    # ax1 = plt.subplot(2, 2, 1)
+    # ax1.plot(results.index, results['close'], label='Price', alpha=0.5)
+    # ax1.plot(results.index, results[f'sma_{strategy.parameters["fast_period"]}'], label=f'SMA {strategy.parameters["fast_period"]}')
+    # ax1.plot(results.index, results[f'sma_{strategy.parameters["slow_period"]}'], label=f'SMA {strategy.parameters["slow_period"]}')
     
-    # Mark buy and sell points
-    buys = results[results['signal'] == 1]
-    sells = results[results['signal'] == -1]
-    ax1.scatter(buys.index, buys['close'], color='green', marker='^', s=100, label='Buy Signal')
-    ax1.scatter(sells.index, sells['close'], color='red', marker='v', s=100, label='Sell Signal')
+    # # Mark buy and sell points
+    # buys = results[results['signal'] == 1]
+    # sells = results[results['signal'] == -1]
+    # ax1.scatter(buys.index, buys['close'], color='green', marker='^', s=100, label='Buy Signal')
+    # ax1.scatter(sells.index, sells['close'], color='red', marker='v', s=100, label='Sell Signal')
     
-    ax1.set_title('Price Chart and Moving Averages')
-    ax1.set_xlabel('Date')
-    ax1.set_ylabel('Price')
-    ax1.legend()
-    ax1.grid(True)
+    # ax1.set_title('Price Chart and Moving Averages')
+    # ax1.set_xlabel('Date')
+    # ax1.set_ylabel('Price')
+    # ax1.legend()
+    # ax1.grid(True)
     
-    # Plot 2: Equity curve
-    ax2 = plt.subplot(2, 2, 2)
-    ax2.plot(results.index, results['portfolio_value'])
-    ax2.set_title('Equity Curve')
-    ax2.set_xlabel('Date')
-    ax2.set_ylabel('Portfolio Value')
-    ax2.grid(True)
+    # # Plot 2: Equity curve
+    # ax2 = plt.subplot(2, 2, 2)
+    # ax2.plot(results.index, results['portfolio_value'])
+    # ax2.set_title('Equity Curve')
+    # ax2.set_xlabel('Date')
+    # ax2.set_ylabel('Portfolio Value')
+    # ax2.grid(True)
     
-    # Plot 3: Drawdowns
-    ax3 = plt.subplot(2, 2, 3)
-    returns = results['returns'].dropna()
-    if len(returns) > 0:
-        cumulative_returns = (1 + returns).cumprod()
-        max_return = cumulative_returns.expanding().max()
-        drawdowns = (cumulative_returns / max_return) - 1
-        ax3.plot(drawdowns.index, drawdowns * 100)
-        ax3.set_title('Drawdowns (%)')
-        ax3.set_xlabel('Date')
-        ax3.set_ylabel('Drawdown %')
-        ax3.grid(True)
+    # # Plot 3: Drawdowns
+    # ax3 = plt.subplot(2, 2, 3)
+    # returns = results['returns'].dropna()
+    # if len(returns) > 0:
+    #     cumulative_returns = (1 + returns).cumprod()
+    #     max_return = cumulative_returns.expanding().max()
+    #     drawdowns = (cumulative_returns / max_return) - 1
+    #     ax3.plot(drawdowns.index, drawdowns * 100)
+    #     ax3.set_title('Drawdowns (%)')
+    #     ax3.set_xlabel('Date')
+    #     ax3.set_ylabel('Drawdown %')
+    #     ax3.grid(True)
     
-    # Plot 4: Position over time
-    ax4 = plt.subplot(2, 2, 4)
-    ax4.plot(results.index, results['position'])
-    ax4.set_title('Position (1=Long, -1=Short, 0=Flat)')
-    ax4.set_xlabel('Date')
-    ax4.set_ylabel('Position')
-    ax4.grid(True)
+    # # Plot 4: Position over time
+    # ax4 = plt.subplot(2, 2, 4)
+    # ax4.plot(results.index, results['position'])
+    # ax4.set_title('Position (1=Long, -1=Short, 0=Flat)')
+    # ax4.set_xlabel('Date')
+    # ax4.set_ylabel('Position')
+    # ax4.grid(True)
     
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.savefig(os.path.join(output_dir, f"{strategy.name}_summary.png"))
     
     # Also create and save the detailed analysis plots

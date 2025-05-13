@@ -597,14 +597,250 @@ class Backtest:
             self.take_profit = take_profit
             logger.info(f"Take-profit set to {take_profit}%")
     
+    # def run(self) -> pd.DataFrame:
+    #     """
+    #     Run backtest
+        
+    #     Returns:
+    #     --------
+    #     pd.DataFrame
+    #         Backtest results
+    #     """
+    #     # Generate signals
+    #     signals = self.strategy.generate_signals(self.data)
+        
+    #     # Create a copy for results
+    #     results = signals.copy()
+        
+    #     # Initialize portfolio metrics
+    #     results['holdings'] = 0.0
+    #     results['cash'] = self.initial_capital
+    #     results['portfolio_value'] = self.initial_capital
+    #     results['entry_price'] = 0.0
+    #     results['stop_loss_price'] = 0.0
+    #     results['take_profit_price'] = 0.0
+    #     results['trade_id'] = 0
+        
+    #     # Portfolio tracking variables
+    #     current_position = 0
+    #     entry_price = 0
+    #     stop_loss_price = 0
+    #     take_profit_price = 0
+    #     trade_id = 0
+        
+    #     # Process each row
+    #     for i in range(1, len(results)):
+    #         try:
+    #             # Get current and previous values
+    #             prev_position = results.iloc[i-1]['position']
+    #             curr_position = results.iloc[i]['position']
+    #             prev_cash = results.iloc[i-1]['cash']
+    #             prev_holdings = results.iloc[i-1]['holdings']
+    #             price = results.iloc[i]['close']
+                
+    #             # Check for position changes
+    #             if curr_position != prev_position:
+    #                 # Close previous position if any
+    #                 if prev_position != 0:
+    #                     # Calculate PnL
+    #                     position_value = prev_holdings * price
+    #                     commission_amount = position_value * self.commission
+    #                     position_value = position_value - commission_amount  # Subtract commission safely
+                        
+    #                     # Update cash
+    #                     results.iloc[i, results.columns.get_loc('cash')] = prev_cash + position_value
+    #                     results.iloc[i, results.columns.get_loc('holdings')] = 0
+                        
+    #                     # Reset entry price and risk management
+    #                     entry_price = 0
+    #                     stop_loss_price = 0
+    #                     take_profit_price = 0
+                    
+    #                 # Open new position if any
+    #                 if curr_position != 0:
+    #                     # Calculate position size
+    #                     trade_capital = results.iloc[i]['cash'] * self.position_size
+    #                     position_size = (trade_capital * self.leverage) / max(price, 0.001)  # Prevent division by zero
+                        
+    #                     # Account for transaction costs
+    #                     position_cost = position_size * price
+    #                     commission_cost = position_cost * self.commission
+                        
+    #                     # Update cash and holdings
+    #                     if curr_position > 0:  # Long position
+    #                         results.iloc[i, results.columns.get_loc('cash')] = prev_cash - position_cost - commission_cost
+    #                         results.iloc[i, results.columns.get_loc('holdings')] = position_size
+                            
+    #                         # Set entry price and risk management
+    #                         entry_price = price
+                            
+    #                         if self.stop_loss:
+    #                             stop_loss_price = entry_price * (1 - self.stop_loss / 100)
+                            
+    #                         if self.take_profit:
+    #                             take_profit_price = entry_price * (1 + self.take_profit / 100)
+                            
+    #                     else:  # Short position
+    #                         results.iloc[i, results.columns.get_loc('cash')] = prev_cash + position_cost - commission_cost
+    #                         results.iloc[i, results.columns.get_loc('holdings')] = -position_size
+                            
+    #                         # Set entry price and risk management
+    #                         entry_price = price
+                            
+    #                         if self.stop_loss:
+    #                             stop_loss_price = entry_price * (1 + self.stop_loss / 100)
+                            
+    #                         if self.take_profit:
+    #                             take_profit_price = entry_price * (1 - self.take_profit / 100)
+                        
+    #                     # Increment trade ID
+    #                     trade_id += 1
+                    
+    #                 # Update entry price and risk management
+    #                 results.iloc[i, results.columns.get_loc('entry_price')] = entry_price
+    #                 results.iloc[i, results.columns.get_loc('stop_loss_price')] = stop_loss_price
+    #                 results.iloc[i, results.columns.get_loc('take_profit_price')] = take_profit_price
+    #                 results.iloc[i, results.columns.get_loc('trade_id')] = trade_id
+                    
+    #             else:
+    #                 # Check for stop-loss and take-profit
+    #                 if prev_position > 0:  # Long position
+    #                     # Check stop-loss
+    #                     if self.stop_loss and price <= stop_loss_price:
+    #                         # Close position
+    #                         position_value = prev_holdings * price
+    #                         commission_amount = position_value * self.commission
+    #                         position_value = position_value - commission_amount
+                            
+    #                         results.iloc[i, results.columns.get_loc('cash')] = prev_cash + position_value
+    #                         results.iloc[i, results.columns.get_loc('holdings')] = 0
+    #                         results.iloc[i, results.columns.get_loc('position')] = 0
+                            
+    #                         # Reset entry price and risk management
+    #                         entry_price = 0
+    #                         stop_loss_price = 0
+    #                         take_profit_price = 0
+                            
+    #                     # Check take-profit
+    #                     elif self.take_profit and price >= take_profit_price:
+    #                         # Close position
+    #                         position_value = prev_holdings * price
+    #                         commission_amount = position_value * self.commission
+    #                         position_value = position_value - commission_amount
+                            
+    #                         results.iloc[i, results.columns.get_loc('cash')] = prev_cash + position_value
+    #                         results.iloc[i, results.columns.get_loc('holdings')] = 0
+    #                         results.iloc[i, results.columns.get_loc('position')] = 0
+                            
+    #                         # Reset entry price and risk management
+    #                         entry_price = 0
+    #                         stop_loss_price = 0
+    #                         take_profit_price = 0
+                            
+    #                     else:
+    #                         # Position unchanged
+    #                         results.iloc[i, results.columns.get_loc('cash')] = prev_cash
+    #                         results.iloc[i, results.columns.get_loc('holdings')] = prev_holdings
+    #                         results.iloc[i, results.columns.get_loc('entry_price')] = entry_price
+    #                         results.iloc[i, results.columns.get_loc('stop_loss_price')] = stop_loss_price
+    #                         results.iloc[i, results.columns.get_loc('take_profit_price')] = take_profit_price
+    #                         results.iloc[i, results.columns.get_loc('trade_id')] = trade_id
+                            
+    #                 elif prev_position < 0:  # Short position
+    #                     # Check stop-loss
+    #                     if self.stop_loss and price >= stop_loss_price:
+    #                         # Close position
+    #                         position_value = abs(prev_holdings) * (2 * entry_price - price)
+    #                         commission_amount = position_value * self.commission
+    #                         position_value = position_value - commission_amount
+                            
+    #                         results.iloc[i, results.columns.get_loc('cash')] = prev_cash + position_value
+    #                         results.iloc[i, results.columns.get_loc('holdings')] = 0
+    #                         results.iloc[i, results.columns.get_loc('position')] = 0
+                            
+    #                         # Reset entry price and risk management
+    #                         entry_price = 0
+    #                         stop_loss_price = 0
+    #                         take_profit_price = 0
+                            
+    #                     # Check take-profit
+    #                     elif self.take_profit and price <= take_profit_price:
+    #                         # Close position
+    #                         position_value = abs(prev_holdings) * (2 * entry_price - price)
+    #                         commission_amount = position_value * self.commission
+    #                         position_value = position_value - commission_amount
+                            
+    #                         results.iloc[i, results.columns.get_loc('cash')] = prev_cash + position_value
+    #                         results.iloc[i, results.columns.get_loc('holdings')] = 0
+    #                         results.iloc[i, results.columns.get_loc('position')] = 0
+                            
+    #                         # Reset entry price and risk management
+    #                         entry_price = 0
+    #                         stop_loss_price = 0
+    #                         take_profit_price = 0
+                            
+    #                     else:
+    #                         # Position unchanged
+    #                         results.iloc[i, results.columns.get_loc('cash')] = prev_cash
+    #                         results.iloc[i, results.columns.get_loc('holdings')] = prev_holdings
+    #                         results.iloc[i, results.columns.get_loc('entry_price')] = entry_price
+    #                         results.iloc[i, results.columns.get_loc('stop_loss_price')] = stop_loss_price
+    #                         results.iloc[i, results.columns.get_loc('take_profit_price')] = take_profit_price
+    #                         results.iloc[i, results.columns.get_loc('trade_id')] = trade_id
+                            
+    #                 else:  # No position
+    #                     # Maintain current state
+    #                     results.iloc[i, results.columns.get_loc('cash')] = prev_cash
+    #                     results.iloc[i, results.columns.get_loc('holdings')] = 0
+    #                     results.iloc[i, results.columns.get_loc('entry_price')] = 0
+    #                     results.iloc[i, results.columns.get_loc('stop_loss_price')] = 0
+    #                     results.iloc[i, results.columns.get_loc('take_profit_price')] = 0
+    #                     results.iloc[i, results.columns.get_loc('trade_id')] = 0
+                
+    #             # Update portfolio value
+    #             if results.iloc[i]['holdings'] > 0:
+    #                 # Long position
+    #                 holdings_value = results.iloc[i]['holdings'] * price
+    #                 # Use safe addition to prevent overflow
+    #                 portfolio_value = float(results.iloc[i]['cash']) + float(holdings_value)
+    #                 # Clip to prevent unrealistic values
+    #                 portfolio_value = min(portfolio_value, 1e15)
+    #                 results.iloc[i, results.columns.get_loc('portfolio_value')] = portfolio_value
+    #             elif results.iloc[i]['holdings'] < 0:
+    #                 # Short position
+    #                 holdings_value = abs(results.iloc[i]['holdings']) * (2 * entry_price - price)
+    #                 # Use safe addition to prevent overflow
+    #                 portfolio_value = float(results.iloc[i]['cash']) + float(holdings_value)
+    #                 # Clip to prevent unrealistic values
+    #                 portfolio_value = min(portfolio_value, 1e15)
+    #                 results.iloc[i, results.columns.get_loc('portfolio_value')] = portfolio_value
+    #             else:
+    #                 # No position
+    #                 results.iloc[i, results.columns.get_loc('portfolio_value')] = results.iloc[i]['cash']
+            
+    #         except Exception as e:
+    #             logger.error(f"Error processing row {i}: {e}")
+    #             # In case of error, copy the previous row values
+    #             for col in results.columns:
+    #                 results.iloc[i, results.columns.get_loc(col)] = results.iloc[i-1][col]
+        
+    #     # Calculate returns safely
+    #     results['returns'] = results['portfolio_value'].pct_change(fill_method=None)
+        
+    #     # Replace inf and -inf with NaN
+    #     results.replace([np.inf, -np.inf], np.nan, inplace=True)
+        
+    #     # Calculate cumulative returns
+    #     # First handle any NaN values in returns
+    #     returns_no_nan = results['returns'].fillna(0)
+    #     results['cumulative_returns'] = (1 + returns_no_nan).cumprod() - 1
+        
+    #     self.results = results
+    #     return results
+
     def run(self) -> pd.DataFrame:
         """
-        Run backtest
-        
-        Returns:
-        --------
-        pd.DataFrame
-            Backtest results
+        Run backtest with improved error handling and numerical stability
         """
         # Generate signals
         signals = self.strategy.generate_signals(self.data)
@@ -612,7 +848,7 @@ class Backtest:
         # Create a copy for results
         results = signals.copy()
         
-        # Initialize portfolio metrics
+        # Initialize portfolio metrics with proper data types
         results['holdings'] = 0.0
         results['cash'] = self.initial_capital
         results['portfolio_value'] = self.initial_capital
@@ -620,15 +856,12 @@ class Backtest:
         results['stop_loss_price'] = 0.0
         results['take_profit_price'] = 0.0
         results['trade_id'] = 0
+        results['commission_paid'] = 0.0  # Track commissions separately
         
         # Portfolio tracking variables
-        current_position = 0
-        entry_price = 0
-        stop_loss_price = 0
-        take_profit_price = 0
         trade_id = 0
         
-        # Process each row
+        # Process each row with error handling
         for i in range(1, len(results)):
             try:
                 # Get current and previous values
@@ -638,69 +871,88 @@ class Backtest:
                 prev_holdings = results.iloc[i-1]['holdings']
                 price = results.iloc[i]['close']
                 
+                # Safety check for price
+                if np.isnan(price) or price <= 0:
+                    logger.warning(f"Invalid price at index {i}: {price}. Using previous price.")
+                    price = results.iloc[i-1]['close']
+                    if np.isnan(price) or price <= 0:
+                        price = 1.0  # Fallback to a safe value
+                
                 # Check for position changes
                 if curr_position != prev_position:
                     # Close previous position if any
                     if prev_position != 0:
-                        # Calculate PnL
+                        # Calculate PnL with safeguards
                         position_value = prev_holdings * price
                         commission_amount = position_value * self.commission
-                        position_value = position_value - commission_amount  # Subtract commission safely
                         
-                        # Update cash
+                        # Ensure commission doesn't exceed position value
+                        commission_amount = min(commission_amount, position_value * 0.99)
+                        position_value = position_value - commission_amount
+                        
+                        # Update cash and tracking
                         results.iloc[i, results.columns.get_loc('cash')] = prev_cash + position_value
                         results.iloc[i, results.columns.get_loc('holdings')] = 0
-                        
-                        # Reset entry price and risk management
-                        entry_price = 0
-                        stop_loss_price = 0
-                        take_profit_price = 0
+                        results.iloc[i, results.columns.get_loc('commission_paid')] = \
+                            results.iloc[i-1]['commission_paid'] + commission_amount
                     
                     # Open new position if any
                     if curr_position != 0:
-                        # Calculate position size
-                        trade_capital = results.iloc[i]['cash'] * self.position_size
-                        position_size = (trade_capital * self.leverage) / max(price, 0.001)  # Prevent division by zero
+                        # Calculate position size safely
+                        trade_capital = max(results.iloc[i]['cash'] * self.position_size, 0)
+                        position_size = (trade_capital * self.leverage) / max(price, 0.001)
                         
                         # Account for transaction costs
                         position_cost = position_size * price
                         commission_cost = position_cost * self.commission
                         
-                        # Update cash and holdings
+                        # Update cash, holdings, and entry parameters
                         if curr_position > 0:  # Long position
                             results.iloc[i, results.columns.get_loc('cash')] = prev_cash - position_cost - commission_cost
                             results.iloc[i, results.columns.get_loc('holdings')] = position_size
+                            results.iloc[i, results.columns.get_loc('commission_paid')] = \
+                                results.iloc[i-1]['commission_paid'] + commission_cost
                             
                             # Set entry price and risk management
                             entry_price = price
                             
                             if self.stop_loss:
                                 stop_loss_price = entry_price * (1 - self.stop_loss / 100)
+                            else:
+                                stop_loss_price = 0
                             
                             if self.take_profit:
                                 take_profit_price = entry_price * (1 + self.take_profit / 100)
+                            else:
+                                take_profit_price = float('inf')
                             
                         else:  # Short position
                             results.iloc[i, results.columns.get_loc('cash')] = prev_cash + position_cost - commission_cost
                             results.iloc[i, results.columns.get_loc('holdings')] = -position_size
+                            results.iloc[i, results.columns.get_loc('commission_paid')] = \
+                                results.iloc[i-1]['commission_paid'] + commission_cost
                             
                             # Set entry price and risk management
                             entry_price = price
                             
                             if self.stop_loss:
                                 stop_loss_price = entry_price * (1 + self.stop_loss / 100)
+                            else:
+                                stop_loss_price = float('inf')
                             
                             if self.take_profit:
                                 take_profit_price = entry_price * (1 - self.take_profit / 100)
+                            else:
+                                take_profit_price = 0
                         
                         # Increment trade ID
                         trade_id += 1
-                    
-                    # Update entry price and risk management
-                    results.iloc[i, results.columns.get_loc('entry_price')] = entry_price
-                    results.iloc[i, results.columns.get_loc('stop_loss_price')] = stop_loss_price
-                    results.iloc[i, results.columns.get_loc('take_profit_price')] = take_profit_price
-                    results.iloc[i, results.columns.get_loc('trade_id')] = trade_id
+                        
+                        # Update trade tracking variables
+                        results.iloc[i, results.columns.get_loc('entry_price')] = entry_price
+                        results.iloc[i, results.columns.get_loc('stop_loss_price')] = stop_loss_price
+                        results.iloc[i, results.columns.get_loc('take_profit_price')] = take_profit_price
+                        results.iloc[i, results.columns.get_loc('trade_id')] = trade_id
                     
                 else:
                     # Check for stop-loss and take-profit
@@ -795,29 +1047,25 @@ class Backtest:
                         results.iloc[i, results.columns.get_loc('entry_price')] = 0
                         results.iloc[i, results.columns.get_loc('stop_loss_price')] = 0
                         results.iloc[i, results.columns.get_loc('take_profit_price')] = 0
-                        results.iloc[i, results.columns.get_loc('trade_id')] = 0
-                
-                # Update portfolio value
-                if results.iloc[i]['holdings'] > 0:
-                    # Long position
+                        results.iloc[i, results.columns.get_loc('trade_id')] = 0                
+                # Update portfolio value safely
+                if results.iloc[i]['holdings'] > 0:  # Long position
                     holdings_value = results.iloc[i]['holdings'] * price
-                    # Use safe addition to prevent overflow
-                    portfolio_value = float(results.iloc[i]['cash']) + float(holdings_value)
+                    portfolio_value = results.iloc[i]['cash'] + holdings_value
                     # Clip to prevent unrealistic values
-                    portfolio_value = min(portfolio_value, 1e15)
+                    portfolio_value = min(max(portfolio_value, 0), 1e15)
                     results.iloc[i, results.columns.get_loc('portfolio_value')] = portfolio_value
-                elif results.iloc[i]['holdings'] < 0:
-                    # Short position
+                elif results.iloc[i]['holdings'] < 0:  # Short position
                     holdings_value = abs(results.iloc[i]['holdings']) * (2 * entry_price - price)
-                    # Use safe addition to prevent overflow
-                    portfolio_value = float(results.iloc[i]['cash']) + float(holdings_value)
+                    # Ensure holdings value can't be negative
+                    holdings_value = max(holdings_value, 0)
+                    portfolio_value = results.iloc[i]['cash'] + holdings_value
                     # Clip to prevent unrealistic values
-                    portfolio_value = min(portfolio_value, 1e15)
+                    portfolio_value = min(max(portfolio_value, 0), 1e15)
                     results.iloc[i, results.columns.get_loc('portfolio_value')] = portfolio_value
-                else:
-                    # No position
+                else:  # No position
                     results.iloc[i, results.columns.get_loc('portfolio_value')] = results.iloc[i]['cash']
-            
+                    
             except Exception as e:
                 logger.error(f"Error processing row {i}: {e}")
                 # In case of error, copy the previous row values
@@ -825,14 +1073,16 @@ class Backtest:
                     results.iloc[i, results.columns.get_loc(col)] = results.iloc[i-1][col]
         
         # Calculate returns safely
-        results['returns'] = results['portfolio_value'].pct_change(fill_method=None)
+        results['returns'] = results['portfolio_value'].pct_change()
         
         # Replace inf and -inf with NaN
         results.replace([np.inf, -np.inf], np.nan, inplace=True)
         
-        # Calculate cumulative returns
+        # Calculate cumulative returns safely
         # First handle any NaN values in returns
         returns_no_nan = results['returns'].fillna(0)
+        # Limit extreme returns that might cause overflow
+        returns_no_nan = returns_no_nan.clip(-0.5, 0.5)  
         results['cumulative_returns'] = (1 + returns_no_nan).cumprod() - 1
         
         self.results = results
@@ -840,12 +1090,7 @@ class Backtest:
     
     def get_trades(self) -> pd.DataFrame:
         """
-        Get list of trades
-        
-        Returns:
-        --------
-        pd.DataFrame
-            DataFrame with trade details
+        Get list of trades with improved accuracy and error handling
         """
         if self.results is None:
             logger.error("Backtest not run yet")
@@ -853,49 +1098,96 @@ class Backtest:
         
         trades = []
         
-        for trade_id in range(1, int(self.results['trade_id'].max()) + 1):
-            # Get trade data
-            trade_data = self.results[self.results['trade_id'] == trade_id]
+        try:
+            # Identify all trade IDs greater than 0
+            trade_ids = sorted(self.results['trade_id'].unique())
+            trade_ids = [tid for tid in trade_ids if tid > 0]
             
-            if len(trade_data) > 0:
-                # Entry
+            for trade_id in trade_ids:
+                # Get all rows for this trade
+                trade_data = self.results[self.results['trade_id'] == trade_id]
+                
+                if len(trade_data) == 0:
+                    continue
+                
+                # Entry details
                 entry_row = trade_data.iloc[0]
                 entry_date = entry_row.name
                 entry_price = entry_row['entry_price']
+                
+                # Validate entry price
+                if np.isnan(entry_price) or entry_price <= 0:
+                    logger.warning(f"Invalid entry price for trade {trade_id}: {entry_price}")
+                    continue
+                
                 position_type = 'LONG' if entry_row['position'] > 0 else 'SHORT'
                 
-                # Exit
+                # Check if trade was closed within the results data
+                exit_found = False
                 exit_row = None
                 exit_date = None
                 exit_price = None
-                pnl = 0
                 
-                # Check if trade was closed
-                next_trade = self.results[self.results.index > trade_data.index[-1]].iloc[0:1]
+                # Look for the next row after this trade where trade_id changes or becomes 0
+                next_rows = self.results[self.results.index > trade_data.index[-1]]
                 
-                if len(next_trade) > 0 and next_trade.iloc[0]['trade_id'] != trade_id:
-                    exit_row = next_trade.iloc[0]
-                    exit_date = exit_row.name
-                    exit_price = exit_row['close']
-                    
-                    # Calculate PnL
+                if len(next_rows) > 0:
+                    for idx, row in next_rows.iterrows():
+                        if row['trade_id'] != trade_id or row['position'] == 0:
+                            exit_row = row
+                            exit_date = idx
+                            exit_price = row['close']
+                            exit_found = True
+                            break
+                
+                # Calculate PnL safely
+                pnl = None
+                if exit_found and exit_price is not None:
                     if position_type == 'LONG':
-                        pnl = (exit_price - entry_price) / entry_price if entry_price != 0 else 0
-                    else:
-                        pnl = (entry_price - exit_price) / entry_price if entry_price != 0 else 0
+                        if entry_price > 0:  # Avoid division by zero
+                            pnl = (exit_price - entry_price) / entry_price
+                    else:  # SHORT
+                        if entry_price > 0:  # Avoid division by zero
+                            pnl = (entry_price - exit_price) / entry_price
                 
-                # Add trade to list
-                trades.append({
+                # Calculate duration if possible
+                duration = None
+                if exit_date is not None:
+                    try:
+                        duration = exit_date - entry_date
+                    except:
+                        duration = None
+                
+                # Add trade to list with all available data
+                trade_info = {
                     'trade_id': trade_id,
                     'entry_date': entry_date,
                     'exit_date': exit_date,
                     'position_type': position_type,
                     'entry_price': entry_price,
                     'exit_price': exit_price,
-                    'pnl': pnl
-                })
-        
-        return pd.DataFrame(trades)
+                    'pnl': pnl,
+                    'duration': duration
+                }
+                
+                trades.append(trade_info)
+            
+            # Convert to DataFrame and handle potential conversion issues
+            trades_df = pd.DataFrame(trades)
+            if len(trades_df) > 0:
+                # Convert potential object or string columns to proper types
+                if 'pnl' in trades_df.columns:
+                    trades_df['pnl'] = pd.to_numeric(trades_df['pnl'], errors='coerce')
+                    
+                # Set index if needed
+                if 'trade_id' in trades_df.columns:
+                    trades_df = trades_df.set_index('trade_id')
+            
+            return trades_df
+            
+        except Exception as e:
+            logger.error(f"Error extracting trades: {e}")
+            return pd.DataFrame(columns=['trade_id', 'entry_date', 'exit_date', 'position_type', 'entry_price', 'exit_price', 'pnl'])
     
     def get_performance_metrics(self) -> Dict:
         """

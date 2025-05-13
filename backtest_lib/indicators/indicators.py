@@ -51,7 +51,7 @@ class Indicators:
     @staticmethod
     def rsi(series: pd.Series, period: int = 14) -> pd.Series:
         """
-        Relative Strength Index
+        Relative Strength Index with improved stability
         
         Parameters:
         -----------
@@ -65,15 +65,39 @@ class Indicators:
         pd.Series
             RSI values
         """
-        delta = series.diff()
+        # Validate input
+        if period <= 0:
+            raise ValueError(f"Period must be positive, got {period}")
+        
+        # Handle edge cases
+        if len(series) <= period:
+            return pd.Series(index=series.index, dtype=float)
+        
+        # Remove NaN values for calculation
+        series_clean = series.copy()
+        series_clean.fillna(method='ffill', inplace=True)
+        
+        # Calculate difference with error handling
+        delta = series_clean.diff()
+        
+        # Separate gains and losses
         gain = delta.where(delta > 0, 0)
         loss = -delta.where(delta < 0, 0)
         
+        # Calculate average gain and loss
         avg_gain = gain.rolling(window=period).mean()
         avg_loss = loss.rolling(window=period).mean()
         
-        rs = avg_gain / avg_loss
+        # Calculate RS with safeguard against division by zero
+        rs = pd.Series(index=series.index, dtype=float)
+        valid_indices = ~(avg_loss.isna() | (avg_loss == 0))
+        rs[valid_indices] = avg_gain[valid_indices] / avg_loss[valid_indices]
+        
+        # Calculate RSI
         rsi = 100 - (100 / (1 + rs))
+        
+        # Ensure values are within range
+        rsi = rsi.clip(0, 100)
         
         return rsi
     

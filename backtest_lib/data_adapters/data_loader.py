@@ -26,7 +26,7 @@ class DataLoader:
     
     def load_csv(self, filename: str, symbol: Optional[str] = None) -> pd.DataFrame:
         """
-        Load data from CSV file
+        Load data from CSV file with improved error handling and validation
         
         Parameters:
         -----------
@@ -48,16 +48,57 @@ class DataLoader:
         else:
             logger.info(f"Loading data from {file_path}")
             try:
-                df = pd.read_csv(file_path)
-                # Convert time columns to datetime
+                # Read CSV with explicit data types and NaN handling
+                df = pd.read_csv(file_path, na_values=['nan', 'NaN', 'None', ''])
+                
+                # Verify required columns exist
+                required_cols = ['time_utc', 'symbol', 'o', 'h', 'l', 'c', 'v']
+                missing_cols = [col for col in required_cols if col not in df.columns]
+                
+                if missing_cols:
+                    raise ValueError(f"Missing required columns in {filename}: {missing_cols}")
+                
+                # Convert time columns to datetime with proper error handling
                 if 'time_utc' in df.columns:
-                    df['time_utc'] = pd.to_datetime(df['time_utc'])
+                    df['time_utc'] = pd.to_datetime(df['time_utc'], errors='coerce')
+                    
+                    # Check for and remove rows with invalid dates
+                    invalid_dates = df['time_utc'].isna()
+                    if invalid_dates.any():
+                        logger.warning(f"Removed {invalid_dates.sum()} rows with invalid dates from {filename}")
+                        df = df[~invalid_dates]
+                    
                 if 'time_est' in df.columns:
-                    df['time_est'] = pd.to_datetime(df['time_est'])
+                    df['time_est'] = pd.to_datetime(df['time_est'], errors='coerce')
+                
+                # Convert numeric columns to correct data types
+                numeric_cols = ['o', 'h', 'l', 'c', 'v']
+                for col in numeric_cols:
+                    if col in df.columns:
+                        df[col] = pd.to_numeric(df[col], errors='coerce')
                 
                 # Set time_utc as index
                 if 'time_utc' in df.columns:
                     df.set_index('time_utc', inplace=True)
+                    
+                    # Check for and remove duplicate timestamps
+                    if df.index.duplicated().any():
+                        dup_count = df.index.duplicated().sum()
+                        logger.warning(f"Found {dup_count} duplicate timestamps in {filename}")
+                        df = df[~df.index.duplicated(keep='first')]
+                    
+                    # Sort by timestamp
+                    if not df.index.is_monotonic_increasing:
+                        logger.warning(f"Timestamps not in order in {filename}. Sorting by timestamp.")
+                        df.sort_index(inplace=True)
+                
+                # Replace inf values with NaN
+                df.replace([np.inf, -np.inf], np.nan, inplace=True)
+                
+                # Check for NaN values
+                nan_count = df.isna().sum().sum()
+                if nan_count > 0:
+                    logger.warning(f"Found {nan_count} NaN values in {filename}")
                 
                 # Cache the data
                 self.data_cache[file_path] = df.copy()
@@ -68,8 +109,42 @@ class DataLoader:
         
         # Filter by symbol if provided
         if symbol and 'symbol' in df.columns:
-            df = df[df['symbol'] == symbol]
+            symbol_counts = df['symbol'].value_counts()
+            logger.info(f"Symbols in {filename}: {dict(symbol_counts)}")
             
+            filtered_df = df[df['symbol'] == symbol]
+            if len(filtered_df) == 0:
+                logger.warning(f"No data found for symbol {symbol} in {filename}")
+            df = filtered_df
+        
+        # Standardize column names
+        rename_dict = {
+            'o': 'open',
+            'h': 'high',
+            'l': 'low',
+            'c': 'close',
+            'v': 'volume'
+        }
+        
+        # Only rename columns that exist
+        rename_cols = {k: v for k, v in rename_dict.items() if k in df.columns}
+        if rename_cols:
+            df = df.rename(columns=rename_cols)
+        
+        # Final validation of OHLCV data
+        for col in ['open', 'high', 'low', 'close', 'volume']:
+            if col in df.columns:
+                # Check for negative prices (shouldn't exist in most financial data)
+                neg_count = (df[col] < 0).sum()
+                if neg_count > 0 and col != 'volume':  # Volume can sometimes be negative
+                    logger.warning(f"Found {neg_count} negative values in {col} column of {filename}")
+                
+                # Check for suspicious zeros in price columns
+                if col in ['open', 'high', 'low', 'close']:
+                    zero_count = (df[col] == 0).sum()
+                    if zero_count > 0:
+                        logger.warning(f"Found {zero_count} zero values in {col} column of {filename}")
+        
         return df
     
     def get_ohlcv(self, symbol: str, timeframe: str = '10m') -> pd.DataFrame:
