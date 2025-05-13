@@ -122,77 +122,250 @@ class Analysis:
         return report
     
 
+    # def _calculate_metrics(self) -> Dict:
+    #     """
+    #     Calculate performance metrics from results with improved numerical stability
+    #     """
+    #     # Extract returns and replace inf values
+    #     returns = self.results['returns'].replace([np.inf, -np.inf], np.nan).dropna()
+        
+    #     if len(returns) == 0:
+    #         logger.warning("No returns data available")
+    #         return {}
+        
+    #     try:
+    #         # Filter out NaN and inf values from portfolio values
+    #         portfolio_values = self.results['portfolio_value'].replace([np.inf, -np.inf], np.nan).dropna()
+            
+    #         if len(portfolio_values) < 2:
+    #             logger.warning("Not enough valid portfolio values to calculate returns")
+    #             return {}
+            
+    #         # Calculate total return based on first and last valid portfolio values
+    #         initial_capital = portfolio_values.iloc[0]
+    #         final_capital = portfolio_values.iloc[-1]
+    #         total_return = (final_capital / initial_capital) - 1
+            
+    #         # Annualized return calculation with safeguards
+    #         trading_days = len(returns)
+    #         if trading_days < 2:
+    #             annual_return = total_return
+    #         else:
+    #             # Calculate trading days per year based on data frequency
+    #             days_diff = (self.results.index[-1] - self.results.index[0]).total_seconds() / 86400
+    #             if days_diff > 0:
+    #                 annual_factor = min(252 / (trading_days / (days_diff / 365.25)), 252)
+    #             else:
+    #                 annual_factor = 1
+                
+    #             # Prevent extreme annualization
+    #             annual_return = ((1 + total_return) ** (annual_factor / trading_days)) - 1
+            
+    #         # Volatility - with minimum value to prevent division by zero
+    #         volatility = max(returns.std() * np.sqrt(252), 1e-6)
+            
+    #         # Sharpe ratio with safeguards
+    #         risk_free_rate = 0.02  # Assuming 2% risk-free rate
+    #         sharpe_ratio = (annual_return - risk_free_rate) / volatility
+            
+    #         # Sortino ratio with safeguards
+    #         negative_returns = returns[returns < 0]
+    #         if len(negative_returns) > 0:
+    #             downside_deviation = negative_returns.std() * np.sqrt(252)
+    #             # Prevent division by zero
+    #             downside_deviation = max(downside_deviation, 1e-6)
+    #         else:
+    #             downside_deviation = 1e-6
+            
+    #         sortino_ratio = (annual_return - risk_free_rate) / downside_deviation
+            
+    #         # Maximum drawdown calculation with proper handling of NaN values
+    #         returns_no_nan = returns.fillna(0)
+    #         # Limit extreme returns to prevent overflow
+    #         returns_no_nan = returns_no_nan.clip(-0.5, 0.5)
+    #         cumulative_returns = (1 + returns_no_nan).cumprod()
+    #         running_max = cumulative_returns.expanding().max()
+    #         drawdowns = (cumulative_returns / running_max) - 1
+    #         max_drawdown = drawdowns.min()
+            
+    #         # Calculate date ranges for context
+    #         start_date = self.results.index[0].strftime('%Y-%m-%d')
+    #         end_date = self.results.index[-1].strftime('%Y-%m-%d')
+    #         period_days = (self.results.index[-1] - self.results.index[0]).days
+            
+    #         metrics = {
+    #             'start_date': start_date,
+    #             'end_date': end_date,
+    #             'period_days': period_days,
+    #             'start_value': initial_capital,
+    #             'end_value': final_capital,
+    #             'total_return': total_return,
+    #             'annual_return': annual_return,
+    #             'volatility': volatility,
+    #             'sharpe_ratio': sharpe_ratio,
+    #             'sortino_ratio': sortino_ratio,
+    #             'max_drawdown': max_drawdown,
+    #         }
+            
+    #         return metrics
+            
+    #     except Exception as e:
+    #         logger.error(f"Error calculating metrics: {e}")
+    #         return {
+    #             'total_return': 0,
+    #             'annual_return': 0,
+    #             'volatility': 0,
+    #             'sharpe_ratio': 0,
+    #             'sortino_ratio': 0,
+    #             'max_drawdown': 0,
+    #         }
+
     def _calculate_metrics(self) -> Dict:
         """
-        Calculate performance metrics from results with improved numerical stability
+        Calculate performance metrics with improved accuracy for cryptocurrency markets
         """
-        # Extract returns and replace inf values
-        returns = self.results['returns'].replace([np.inf, -np.inf], np.nan).dropna()
-        
-        if len(returns) == 0:
-            logger.warning("No returns data available")
-            return {}
-        
         try:
-            # Filter out NaN and inf values from portfolio values
+            # Filter out NaN and inf values from portfolio values and returns
             portfolio_values = self.results['portfolio_value'].replace([np.inf, -np.inf], np.nan).dropna()
             
             if len(portfolio_values) < 2:
-                logger.warning("Not enough valid portfolio values to calculate returns")
+                logger.warning("Not enough valid portfolio values to calculate metrics")
                 return {}
             
-            # Calculate total return based on first and last valid portfolio values
-            initial_capital = portfolio_values.iloc[0]
-            final_capital = portfolio_values.iloc[-1]
-            total_return = (final_capital / initial_capital) - 1
-            
-            # Annualized return calculation with safeguards
-            trading_days = len(returns)
-            if trading_days < 2:
-                annual_return = total_return
-            else:
-                # Calculate trading days per year based on data frequency
-                days_diff = (self.results.index[-1] - self.results.index[0]).total_seconds() / 86400
-                if days_diff > 0:
-                    annual_factor = min(252 / (trading_days / (days_diff / 365.25)), 252)
-                else:
-                    annual_factor = 1
-                
-                # Prevent extreme annualization
-                annual_return = ((1 + total_return) ** (annual_factor / trading_days)) - 1
-            
-            # Volatility - with minimum value to prevent division by zero
-            volatility = max(returns.std() * np.sqrt(252), 1e-6)
-            
-            # Sharpe ratio with safeguards
-            risk_free_rate = 0.02  # Assuming 2% risk-free rate
-            sharpe_ratio = (annual_return - risk_free_rate) / volatility
-            
-            # Sortino ratio with safeguards
-            negative_returns = returns[returns < 0]
-            if len(negative_returns) > 0:
-                downside_deviation = negative_returns.std() * np.sqrt(252)
-                # Prevent division by zero
-                downside_deviation = max(downside_deviation, 1e-6)
-            else:
-                downside_deviation = 1e-6
-            
-            sortino_ratio = (annual_return - risk_free_rate) / downside_deviation
-            
-            # Maximum drawdown calculation with proper handling of NaN values
-            returns_no_nan = returns.fillna(0)
-            # Limit extreme returns to prevent overflow
-            returns_no_nan = returns_no_nan.clip(-0.5, 0.5)
-            cumulative_returns = (1 + returns_no_nan).cumprod()
-            running_max = cumulative_returns.expanding().max()
-            drawdowns = (cumulative_returns / running_max) - 1
-            max_drawdown = drawdowns.min()
+            # Extract clean returns
+            returns = self.results['returns'].replace([np.inf, -np.inf], np.nan).dropna()
+            log_returns = self.results['log_returns'].replace([np.inf, -np.inf], np.nan).dropna() if 'log_returns' in self.results.columns else np.log(1 + returns)
             
             # Calculate date ranges for context
             start_date = self.results.index[0].strftime('%Y-%m-%d')
             end_date = self.results.index[-1].strftime('%Y-%m-%d')
-            period_days = (self.results.index[-1] - self.results.index[0]).days
             
+            # Calculate time period - account for crypto trading 365 days a year
+            period_days = (self.results.index[-1] - self.results.index[0]).days
+            if period_days == 0:
+                period_days = (self.results.index[-1] - self.results.index[0]).total_seconds() / 86400
+            
+            # Calculate initial and final capital
+            initial_capital = portfolio_values.iloc[0]
+            final_capital = portfolio_values.iloc[-1]
+            
+            # Calculate total return
+            total_return = (final_capital / initial_capital) - 1
+            
+            # Annualized return calculation - properly annualized for crypto (365 days)
+            # Use the standard formula: (1 + total_return)^(365/days) - 1
+            if period_days > 0:
+                annual_return = (1 + total_return) ** (365 / period_days) - 1
+            else:
+                annual_return = 0
+            
+            # Calculate trading frequency
+            minutes_per_candle = 10  # Assuming 10-minute candlesticks
+            annual_factor = (365 * 24 * 60) / minutes_per_candle  # Number of candles per year
+            
+            # Volatility calculation using log returns
+            if len(log_returns) > 1:
+                volatility = log_returns.std() * np.sqrt(annual_factor)
+            else:
+                volatility = 0
+            
+            # Sharpe ratio with industry standard risk-free rate (adjusted for crypto)
+            risk_free_rate = 0.02  # 2% annual risk-free rate
+            daily_risk_free = (1 + risk_free_rate) ** (1/365) - 1
+            excess_return = annual_return - risk_free_rate
+            sharpe_ratio = excess_return / volatility if volatility > 0 else 0
+            
+            # Sortino ratio - only downside volatility
+            negative_returns = log_returns[log_returns < 0]
+            if len(negative_returns) > 0 and negative_returns.std() > 0:
+                downside_deviation = negative_returns.std() * np.sqrt(annual_factor)
+                sortino_ratio = excess_return / downside_deviation
+            else:
+                sortino_ratio = 0
+            
+            # Maximum drawdown calculation
+            if 'drawdown' in self.results.columns:
+                max_drawdown = self.results['drawdown'].min()
+            else:
+                # Calculate drawdown series
+                peak = portfolio_values.expanding().max()
+                drawdown = (portfolio_values / peak) - 1
+                max_drawdown = drawdown.min()
+            
+            # Calculate Calmar ratio
+            calmar_ratio = annual_return / abs(max_drawdown) if max_drawdown < 0 else float('inf')
+            
+            # Extract trade statistics
+            if self.backtest is not None:
+                trades = self.backtest.get_trades()
+            else:
+                trades = self._extract_trades()
+            
+            # Calculate trade metrics
+            if len(trades) > 0:
+                # Filter out trades without PnL
+                trades_with_pnl = trades.dropna(subset=['pnl'])
+                
+                # Number of trades
+                total_trades = len(trades)
+                total_closed_trades = len(trades_with_pnl)
+                total_open_trades = total_trades - total_closed_trades
+                
+                # Win/loss stats
+                if len(trades_with_pnl) > 0:
+                    winning_trades = len(trades_with_pnl[trades_with_pnl['pnl'] > 0])
+                    losing_trades = len(trades_with_pnl[trades_with_pnl['pnl'] <= 0])
+                    win_rate = winning_trades / len(trades_with_pnl) if len(trades_with_pnl) > 0 else 0
+                    
+                    # Trade performance
+                    avg_trade = trades_with_pnl['pnl'].mean() if len(trades_with_pnl) > 0 else 0
+                    avg_winning_trade = trades_with_pnl[trades_with_pnl['pnl'] > 0]['pnl'].mean() if winning_trades > 0 else 0
+                    avg_losing_trade = trades_with_pnl[trades_with_pnl['pnl'] <= 0]['pnl'].mean() if losing_trades > 0 else 0
+                    
+                    # Best and worst trades
+                    best_trade = trades_with_pnl['pnl'].max() if len(trades_with_pnl) > 0 else 0
+                    worst_trade = trades_with_pnl['pnl'].min() if len(trades_with_pnl) > 0 else 0
+                    
+                    # Profit factor
+                    gross_profit = trades_with_pnl[trades_with_pnl['pnl'] > 0]['pnl'].sum() if winning_trades > 0 else 0
+                    gross_loss = abs(trades_with_pnl[trades_with_pnl['pnl'] <= 0]['pnl'].sum()) if losing_trades > 0 else 0
+                    profit_factor = gross_profit / gross_loss if gross_loss > 0 else float('inf')
+                    
+                    # Expectancy
+                    expectancy = avg_trade
+                else:
+                    winning_trades = 0
+                    losing_trades = 0
+                    win_rate = 0
+                    avg_trade = 0
+                    avg_winning_trade = 0
+                    avg_losing_trade = 0
+                    best_trade = 0
+                    worst_trade = 0
+                    profit_factor = 0
+                    expectancy = 0
+            else:
+                total_trades = 0
+                total_closed_trades = 0
+                total_open_trades = 0
+                winning_trades = 0
+                losing_trades = 0
+                win_rate = 0
+                avg_trade = 0
+                avg_winning_trade = 0
+                avg_losing_trade = 0
+                best_trade = 0
+                worst_trade = 0
+                profit_factor = 0
+                expectancy = 0
+            
+            # Calculate commission impact
+            if 'commission_paid' in self.results.columns:
+                total_fees_paid = self.results['commission_paid'].iloc[-1]
+            else:
+                total_fees_paid = 0
+            
+            # Compile all metrics
             metrics = {
                 'start_date': start_date,
                 'end_date': end_date,
@@ -205,12 +378,29 @@ class Analysis:
                 'sharpe_ratio': sharpe_ratio,
                 'sortino_ratio': sortino_ratio,
                 'max_drawdown': max_drawdown,
+                'calmar_ratio': calmar_ratio,
+                'total_trades': total_trades,
+                'total_closed_trades': total_closed_trades,
+                'total_open_trades': total_open_trades,
+                'winning_trades': winning_trades,
+                'losing_trades': losing_trades,
+                'win_rate': win_rate,
+                'avg_trade': avg_trade,
+                'avg_winning_trade': avg_winning_trade,
+                'avg_losing_trade': avg_losing_trade,
+                'best_trade': best_trade,
+                'worst_trade': worst_trade,
+                'profit_factor': profit_factor,
+                'expectancy': expectancy,
+                'commission': self.backtest.commission if self.backtest is not None else 0,
+                'total_fees_paid': total_fees_paid
             }
             
             return metrics
-            
+        
         except Exception as e:
             logger.error(f"Error calculating metrics: {e}")
+            traceback.print_exc()
             return {
                 'total_return': 0,
                 'annual_return': 0,
@@ -218,74 +408,150 @@ class Analysis:
                 'sharpe_ratio': 0,
                 'sortino_ratio': 0,
                 'max_drawdown': 0,
+                'win_rate': 0,
+                'avg_pnl': 0,
+                'num_trades': 0
             }
     
+    # def _extract_trades(self) -> pd.DataFrame:
+    #         """
+    #         Extract trades from results
+            
+    #         Returns:
+    #         --------
+    #         pd.DataFrame
+    #             DataFrame with trade details
+    #         """
+    #         # Placeholder for trade extraction from results
+    #         # This is a simplified version and may not capture all trades accurately
+            
+    #         # Detect position changes
+    #         position_changes = self.results['position'].diff() != 0
+            
+    #         # Get potential trade entries and exits
+    #         trades = []
+            
+    #         # Find trade entries
+    #         for i in range(1, len(self.results)):
+    #             if self.results['position'].iloc[i] != 0 and self.results['position'].iloc[i-1] == 0:
+    #                 # Entry
+    #                 entry_date = self.results.index[i]
+    #                 entry_price = self.results['close'].iloc[i]
+    #                 position_type = 'LONG' if self.results['position'].iloc[i] > 0 else 'SHORT'
+                    
+    #                 # Find corresponding exit
+    #                 exit_found = False
+    #                 for j in range(i+1, len(self.results)):
+    #                     if self.results['position'].iloc[j] == 0 and self.results['position'].iloc[j-1] != 0:
+    #                         # Exit
+    #                         exit_date = self.results.index[j]
+    #                         exit_price = self.results['close'].iloc[j]
+                            
+    #                         # Calculate PnL
+    #                         if position_type == 'LONG':
+    #                             pnl = (exit_price - entry_price) / entry_price if entry_price != 0 else 0
+    #                         else:
+    #                             pnl = (entry_price - exit_price) / entry_price if entry_price != 0 else 0
+                            
+    #                         # Add trade
+    #                         trades.append({
+    #                             'entry_date': entry_date,
+    #                             'exit_date': exit_date,
+    #                             'position_type': position_type,
+    #                             'entry_price': entry_price,
+    #                             'exit_price': exit_price,
+    #                             'pnl': pnl
+    #                         })
+                            
+    #                         exit_found = True
+    #                         break
+                    
+    #                 # If no exit found, trade is still open
+    #                 if not exit_found:
+    #                     trades.append({
+    #                         'entry_date': entry_date,
+    #                         'exit_date': None,
+    #                         'position_type': position_type,
+    #                         'entry_price': entry_price,
+    #                         'exit_price': None,
+    #                         'pnl': None
+    #                     })
+            
+    #         return pd.DataFrame(trades)
     def _extract_trades(self) -> pd.DataFrame:
-            """
-            Extract trades from results
-            
-            Returns:
-            --------
-            pd.DataFrame
-                DataFrame with trade details
-            """
-            # Placeholder for trade extraction from results
-            # This is a simplified version and may not capture all trades accurately
-            
-            # Detect position changes
-            position_changes = self.results['position'].diff() != 0
-            
-            # Get potential trade entries and exits
-            trades = []
-            
-            # Find trade entries
-            for i in range(1, len(self.results)):
-                if self.results['position'].iloc[i] != 0 and self.results['position'].iloc[i-1] == 0:
-                    # Entry
-                    entry_date = self.results.index[i]
-                    entry_price = self.results['close'].iloc[i]
-                    position_type = 'LONG' if self.results['position'].iloc[i] > 0 else 'SHORT'
-                    
-                    # Find corresponding exit
-                    exit_found = False
-                    for j in range(i+1, len(self.results)):
-                        if self.results['position'].iloc[j] == 0 and self.results['position'].iloc[j-1] != 0:
-                            # Exit
-                            exit_date = self.results.index[j]
-                            exit_price = self.results['close'].iloc[j]
-                            
-                            # Calculate PnL
-                            if position_type == 'LONG':
-                                pnl = (exit_price - entry_price) / entry_price if entry_price != 0 else 0
-                            else:
-                                pnl = (entry_price - exit_price) / entry_price if entry_price != 0 else 0
-                            
-                            # Add trade
-                            trades.append({
-                                'entry_date': entry_date,
-                                'exit_date': exit_date,
-                                'position_type': position_type,
-                                'entry_price': entry_price,
-                                'exit_price': exit_price,
-                                'pnl': pnl
-                            })
-                            
-                            exit_found = True
-                            break
-                    
-                    # If no exit found, trade is still open
-                    if not exit_found:
-                        trades.append({
-                            'entry_date': entry_date,
-                            'exit_date': None,
-                            'position_type': position_type,
-                            'entry_price': entry_price,
-                            'exit_price': None,
-                            'pnl': None
-                        })
-            
-            return pd.DataFrame(trades)
-    
+        """
+        Extract trades from results with improved accuracy
+        """
+        # Placeholder for trade extraction from results
+        # This is a more robust version
+        
+        trades = []
+        
+        # Find position changes
+        position = self.results['position']
+        entry_idx = []
+        exit_idx = []
+        
+        # Identify entry points (position changes from 0 to non-zero)
+        for i in range(1, len(position)):
+            if position.iloc[i-1] == 0 and position.iloc[i] != 0:
+                entry_idx.append(i)
+            elif position.iloc[i-1] != 0 and (position.iloc[i] == 0 or position.iloc[i] * position.iloc[i-1] < 0):
+                exit_idx.append(i)
+        
+        # Add final exit if position is still open at the end
+        if len(entry_idx) > len(exit_idx) and position.iloc[-1] != 0:
+            exit_idx.append(len(position) - 1)
+        
+        # Match entries with exits
+        for i in range(len(entry_idx)):
+            if i < len(exit_idx):
+                # Entry details
+                entry_date = self.results.index[entry_idx[i]]
+                entry_price = self.results['close'].iloc[entry_idx[i]]
+                position_type = 'LONG' if position.iloc[entry_idx[i]] > 0 else 'SHORT'
+                
+                # Exit details
+                exit_date = self.results.index[exit_idx[i]]
+                exit_price = self.results['close'].iloc[exit_idx[i]]
+                
+                # Calculate duration
+                duration = exit_date - entry_date
+                
+                # Calculate PnL
+                if position_type == 'LONG':
+                    pnl = (exit_price - entry_price) / entry_price
+                else:  # SHORT
+                    pnl = (entry_price - exit_price) / entry_price
+                
+                # Add trade
+                trades.append({
+                    'entry_date': entry_date,
+                    'exit_date': exit_date,
+                    'position_type': position_type,
+                    'entry_price': entry_price,
+                    'exit_price': exit_price,
+                    'pnl': pnl,
+                    'duration': duration
+                })
+            else:
+                # Open position without exit
+                entry_date = self.results.index[entry_idx[i]]
+                entry_price = self.results['close'].iloc[entry_idx[i]]
+                position_type = 'LONG' if position.iloc[entry_idx[i]] > 0 else 'SHORT'
+                
+                trades.append({
+                    'entry_date': entry_date,
+                    'exit_date': None,
+                    'position_type': position_type,
+                    'entry_price': entry_price,
+                    'exit_price': None,
+                    'pnl': None,
+                    'duration': None
+                })
+        
+        return pd.DataFrame(trades)
+
     def _generate_figures(self, directory: str, timestamp: str) -> List[str]:
         """
         Generate performance figures

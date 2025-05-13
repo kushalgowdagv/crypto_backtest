@@ -189,34 +189,6 @@ class Indicators:
         
         return macd_line, signal_line, histogram
     
-    # @staticmethod
-    # def adx(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
-    #     """
-    #     Average Directional Index
-        
-    #     Parameters:
-    #     -----------
-    #     high : pd.Series
-    #         High prices
-    #     low : pd.Series
-    #         Low prices
-    #     close : pd.Series
-    #         Close prices
-    #     period : int
-    #         ADX period
-            
-    #     Returns:
-    #     --------
-    #     Tuple[pd.Series, pd.Series, pd.Series, pd.Series]
-    #         ADX, +DI, -DI, DX values
-    #     """
-    #     # Use TALib for ADX calculation
-    #     adx = pd.Series(talib.ADX(high.values, low.values, close.values, timeperiod=period), index=close.index)
-    #     plus_di = pd.Series(talib.PLUS_DI(high.values, low.values, close.values, timeperiod=period), index=close.index)
-    #     minus_di = pd.Series(talib.MINUS_DI(high.values, low.values, close.values, timeperiod=period), index=close.index)
-    #     dx = pd.Series(talib.DX(high.values, low.values, close.values, timeperiod=period), index=close.index)
-        
-    #     return adx, plus_di, minus_di, dx
 
     @staticmethod
     def adx(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:

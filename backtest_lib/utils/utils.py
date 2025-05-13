@@ -193,3 +193,54 @@ def export_to_excel(data: Dict, output_file: str) -> None:
     except Exception as e:
         logger.error(f"Error exporting to Excel: {e}")
         raise
+
+def calculate_trading_days_per_year() -> float:
+    """
+    Calculate the number of trading days per year for cryptocurrencies
+    Cryptocurrency markets trade 24/7/365
+    """
+    return 365  # Full calendar days for crypto markets
+
+def calculate_daily_returns(results: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate daily returns from the portfolio value time series
+    
+    Parameters:
+    -----------
+    results : pd.DataFrame
+        Backtest results with portfolio_value column
+        
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame with daily returns
+    """
+    # Resample to daily values
+    daily_values = results['portfolio_value'].resample('D').last()
+    
+    # Calculate returns
+    daily_returns = daily_values.pct_change().dropna()
+    
+    return daily_returns
+
+def calculate_monthly_returns(results: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate monthly returns from the portfolio value time series
+    
+    Parameters:
+    -----------
+    results : pd.DataFrame
+        Backtest results with portfolio_value column
+        
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame with monthly returns
+    """
+    # Resample to monthly values
+    monthly_values = results['portfolio_value'].resample('M').last()
+    
+    # Calculate returns
+    monthly_returns = monthly_values.pct_change().dropna()
+    
+    return monthly_returns
