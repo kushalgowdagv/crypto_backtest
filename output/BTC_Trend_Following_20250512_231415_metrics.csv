@@ -1,0 +1,10 @@
+Metric,Value
+total_return,99999999999.0
+annual_return,0.1411590722560958
+volatility,inf
+sharpe_ratio,0.0
+sortino_ratio,0.02636593941921346
+max_drawdown,-1.0
+win_rate,0.3230069555912253
+avg_pnl,9.6278086477995e-05
+num_trades,18690.0

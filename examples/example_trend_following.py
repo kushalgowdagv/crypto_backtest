@@ -903,6 +903,9 @@ def main():
     
     # Display the plots
     plt.show()
+
+    print("Plots saved in output directory.")
+    print("=="*30)
     
     # Return key summary for easy reference
     return {
